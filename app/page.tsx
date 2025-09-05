@@ -1,7 +1,27 @@
-import { Button } from "@/components/ui/button"
-import { Atom, Grid3X3, Users, Calendar, MapPin, CreditCard, RotateCcw, Shield } from "lucide-react"
+"use client";
+import { Button } from "@/components/ui/button";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
+import { Atom, Grid3X3, Users, Calendar } from "lucide-react";
+import { useUser } from '@clerk/nextjs'
+import { useEffect } from 'react'
 
 export default function Home() {
+    const { isSignedIn, user } = useUser()
+    useEffect(() => {
+    if (isSignedIn && user) {
+      // Sync user to database after they sign in
+      fetch('/api/sync-user', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => console.log('User sync result:', data))
+        .catch(err => console.error('User sync failed:', err))
+    }
+  }, [isSignedIn, user])
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
@@ -12,21 +32,48 @@ export default function Home() {
               <Atom className="h-6 w-6 text-blue-400" />
               <span className="text-xl font-bold">QUANTUM DAILY</span>
             </div>
-            
-            <nav className="hidden md:flex items-center space-x-8">
-              <a href="#" className="text-slate-300 hover:text-white transition-colors">Home</a>
-              <a href="#" className="text-slate-300 hover:text-white transition-colors">All Episodes</a>
-              <a href="#" className="text-slate-300 hover:text-white transition-colors">Meet the Hosts</a>
-              <a href="#" className="text-slate-300 hover:text-white transition-colors">Pricing</a>
-              <a href="#" className="text-slate-300 hover:text-white transition-colors">FAQs</a>
-            </nav>
-            
+
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="text-slate-300 hover:text-white">Login</Button>
-              <Button className="bg-violet-600 hover:bg-violet-700 text-white">
-                <Users className="mr-2 h-4 w-4" />
-                Sign Up
-              </Button>
+              {/* Show login/signup for non-authenticated users */}
+              <SignedOut>
+                <SignInButton mode="redirect">
+                  <Button
+                    variant="ghost"
+                    className="text-slate-300 hover:text-white"
+                    onClick={() =>
+                      console.log("🔑 Header Login button clicked")
+                    }
+                  >
+                    Login
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="redirect">
+                  <Button
+                    className="bg-violet-600 hover:bg-violet-700 text-white"
+                    onClick={() =>
+                      console.log("📝 Header Sign Up button clicked")
+                    }
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Sign Up
+                  </Button>
+                </SignUpButton>
+              </SignedOut>
+
+              {/* Show user button for authenticated users */}
+              <SignedIn>
+                <Button
+                  variant="outline"
+                  className="text-slate-300 hover:text-white"
+                  onClick={() => {
+                    console.log("📺 Going to all episodes");
+                    window.location.href = "/all-episodes";
+                  }}
+                >
+                  All Episodes
+                </Button>
+                <UserButton appearance={{}} />
+              </SignedIn>
             </div>
           </div>
         </div>
@@ -39,33 +86,48 @@ export default function Home() {
             {/* Left Content */}
             <div className="space-y-8">
               <div className="text-blue-400 text-lg">Quantum Daily:</div>
-              
+
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
                 The latest AI & quantum research, explained in{" "}
                 <span className="text-white">plain English.</span>
               </h1>
-              
+
               <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
-                Quantum Daily is a premium daily newsletter and podcast. Each episode is lovingly crafted by hand, and delivered to your inbox every morning.
+                Quantum Daily is a premium daily newsletter and podcast. Each
+                episode is lovingly crafted by hand, and delivered to your inbox
+                every morning.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button className="bg-violet-600 hover:bg-violet-700 px-8 py-3 text-lg">
+                <Button
+                  className="bg-violet-600 hover:bg-violet-700 px-8 py-3 text-lg"
+                  onClick={() => alert("Redirecting to episodes...")}
+                >
                   <Grid3X3 className="mr-2 h-5 w-5" />
                   Previous Episodes
                 </Button>
-                <Button variant="outline" className="border-violet-600 text-violet-400 hover:bg-violet-600 hover:text-white px-8 py-3 text-lg">
-                  <Users className="mr-2 h-5 w-5" />
-                  Join the Club
-                </Button>
+                <SignUpButton mode="redirect">
+                  <Button
+                    variant="outline"
+                    className="border-violet-600 text-violet-400 hover:bg-violet-600 hover:text-white px-8 py-3 text-lg"
+                  >
+                    <Users className="mr-2 h-5 w-5" />
+                    Join the Club
+                  </Button>
+                </SignUpButton>
               </div>
-              
+
               <div className="flex items-center space-x-2 text-slate-400 text-sm">
                 <Calendar className="h-4 w-4" />
-                <span>Already a member? Click here to login.</span>
+                <span>Already a member? </span>
+                <SignInButton mode="redirect">
+                  <button className="text-blue-400 hover:text-blue-300 transition-colors">
+                    Click here to login.
+                  </button>
+                </SignInButton>
               </div>
             </div>
-            
+
             {/* Right Content - Floating Papers */}
             <div className="relative h-96 lg:h-[500px]">
               {/* Paper 1 - Top Right */}
@@ -85,7 +147,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Paper 2 - Center */}
               <div className="absolute top-16 right-12 w-48 h-64 bg-white rounded-lg shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-300">
                 <div className="p-4 h-full">
@@ -101,7 +163,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Paper 3 - Left */}
               <div className="absolute top-32 left-8 w-44 h-60 bg-white rounded-lg shadow-2xl transform rotate-45 hover:rotate-12 transition-transform duration-300">
                 <div className="p-4 h-full">
@@ -114,7 +176,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Paper 4 - Bottom Right */}
               <div className="absolute bottom-8 right-4 w-52 h-68 bg-white rounded-lg shadow-2xl transform -rotate-12 hover:-rotate-6 transition-transform duration-300">
                 <div className="p-4 h-full">
@@ -133,7 +195,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Paper 5 - Bottom Left */}
               <div className="absolute bottom-0 left-16 w-46 h-62 bg-white rounded-lg shadow-2xl transform rotate-24 hover:rotate-12 transition-transform duration-300">
                 <div className="p-4 h-full">
@@ -145,7 +207,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Paper 6 - Top Left */}
               <div className="absolute top-4 left-0 w-44 h-58 bg-white rounded-lg shadow-2xl transform -rotate-24 hover:-rotate-12 transition-transform duration-300">
                 <div className="p-4 h-full">
@@ -161,62 +223,112 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
       <footer className="border-t border-slate-800 mt-20">
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-4 gap-8">
-            {/* Company Info */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <Atom className="h-5 w-5 text-blue-400" />
                 <span className="font-bold">QUANTUM DAILY</span>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Quantum Daily is a members-only podcast and streaming platform. Each episode is lovingly crafted by hand, by a team of subject-matter experts.
+                Quantum Daily is a members-only podcast and streaming platform.
+                Each episode is lovingly crafted by hand, by a team of
+                subject-matter experts.
               </p>
             </div>
-            
-            {/* Navigation */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Home</a>
-                <a href="#" className="block text-blue-400 hover:text-blue-300 transition-colors">Episodes</a>
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Hosts</a>
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Careers</a>
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Pricing</a>
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">FAQs</a>
+                <a
+                  href="#"
+                  className="block text-slate-300 hover:text-white transition-colors"
+                >
+                  Home
+                </a>
+                <a
+                  href="#"
+                  className="block text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Episodes
+                </a>
+                <a
+                  href="#"
+                  className="block text-slate-300 hover:text-white transition-colors"
+                >
+                  Hosts
+                </a>
+                <a
+                  href="#"
+                  className="block text-slate-300 hover:text-white transition-colors"
+                >
+                  Careers
+                </a>
+                <a
+                  href="#"
+                  className="block text-slate-300 hover:text-white transition-colors"
+                >
+                  Pricing
+                </a>
+                <a
+                  href="#"
+                  className="block text-slate-300 hover:text-white transition-colors"
+                >
+                  FAQs
+                </a>
               </div>
             </div>
-            
-            {/* Account */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Sign Up</a>
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Login</a>
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Terms</a>
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Privacy</a>
-                <a href="#" className="block text-slate-300 hover:text-white transition-colors">Refunds</a>
+                <SignUpButton mode="redirect">
+                  <button className="block text-slate-300 hover:text-white transition-colors">
+                    Sign Up
+                  </button>
+                </SignUpButton>
+                <SignInButton mode="redirect">
+                  <button className="block text-slate-300 hover:text-white transition-colors">
+                    Login
+                  </button>
+                </SignInButton>
+                <a
+                  href="#"
+                  className="block text-slate-300 hover:text-white transition-colors"
+                >
+                  Terms
+                </a>
+                <a
+                  href="#"
+                  className="block text-slate-300 hover:text-white transition-colors"
+                >
+                  Privacy
+                </a>
+                <a
+                  href="#"
+                  className="block text-slate-300 hover:text-white transition-colors"
+                >
+                  Refunds
+                </a>
               </div>
             </div>
-            
-            {/* Support */}
             <div className="space-y-4">
               <h3 className="text-white font-semibold">Support / Feedback</h3>
               <p className="text-slate-400 text-sm">
-                If you have any questions about the platform, or would like support with a purchase, feel free to reach out anytime:
+                If you have any questions about the platform, or would like
+                support with a purchase, feel free to reach out anytime:
               </p>
-              <a href="mailto:support@quantumdaily.io" className="text-blue-400 hover:text-blue-300 transition-colors text-sm">
-                support@quantumdaily.io
-              </a>
             </div>
           </div>
-          
+          <a
+            href="mailto:support@quantumdaily.io"
+            className="text-blue-400 hover:text-blue-300 transition-colors text-sm"
+          >
+            support@quantumdaily.io
+          </a>
+          å
           <div className="border-t border-slate-800 mt-8 pt-6 flex items-center justify-between text-slate-400 text-sm">
             <div>© 2025 QuantumDaily.io • All rights reserved.</div>
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }
