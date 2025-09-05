@@ -1,6 +1,6 @@
 //lib/db/schema.ts
 //lib/db/schema.ts
-import { integer, pgTable, varchar, text, timestamp, real } from "drizzle-orm/pg-core";
+import { integer, pgTable, varchar, text, timestamp, real, boolean } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
  id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -14,13 +14,19 @@ export const usersTable = pgTable("users", {
 });
 
 export const papersTable = pgTable("papers", {
- id: integer().primaryKey().generatedAlwaysAsIdentity(),
- title: varchar({ length: 500 }).notNull(),
- summary: text().notNull(),
- audioUrl: varchar({ length: 500 }),
- category: varchar({ length: 100 }).notNull(), // ai, quantum
- publishedAt: timestamp().notNull(),
- createdAt: timestamp().defaultNow().notNull(),
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  arxivId: varchar({ length: 255 }).notNull().unique(),
+  title: varchar({ length: 1000 }).notNull(),
+  summary: text().notNull(),
+  authors: text().notNull(), // JSON string of authors array
+  categories: text().notNull(), // JSON string of categories array
+  publishedDate: timestamp().notNull(),
+  pdfUrl: varchar({ length: 500 }),
+  arxivUrl: varchar({ length: 500 }),
+  generatedSummary: text(), // AI-generated plain English summary
+  audioUrl: varchar({ length: 500 }),
+  processed: boolean().default(false),
+  createdAt: timestamp().defaultNow().notNull(),
 });
 
 export const userInteractionsTable = pgTable("user_interactions", {
